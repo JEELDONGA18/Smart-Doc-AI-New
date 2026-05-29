@@ -1,11 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/contexts/AuthContext";
 import Sidebar from "@/app/components/dashboard/Sidebar";
 
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [loading, isAuthenticated, router]);
+
   const toggleSidebar = () => setSidebarOpen((v) => !v);
+
+  if (loading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#09090b]">

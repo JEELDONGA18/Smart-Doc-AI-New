@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup } = useAuth();
+  const { signup, isAuthenticated, loading: authLoading  } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +17,12 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, isAuthenticated, router]);
+  
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -47,6 +53,10 @@ export default function SignupPage() {
     }
   }
 
+  if (authLoading) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col items-center">
       {/* Logo */}
@@ -72,7 +82,7 @@ export default function SignupPage() {
             <label className="block text-sm text-zinc-400 mb-2">Full name</label>
             <input
               type="text"
-              placeholder="John Doe"
+              placeholder="Smart Doc AI User"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-indigo-500/50 focus:outline-none transition-colors"
@@ -163,14 +173,14 @@ export default function SignupPage() {
         </form>
 
         {/* Divider */}
-        <div className="flex items-center gap-3 my-6">
+        {/* <div className="flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-white/[0.06]" />
           <span className="text-xs text-zinc-600">or</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
-        </div>
+        </div> */}
 
         {/* Google button */}
-        <button className="w-full flex items-center justify-center gap-3 bg-white/[0.06] border border-white/[0.08] text-zinc-300 rounded-full py-3 text-sm font-medium hover:bg-white/[0.08] hover:border-white/[0.12] transition-colors">
+        {/* <button className="w-full flex items-center justify-center gap-3 bg-white/[0.06] border border-white/[0.08] text-zinc-300 rounded-full py-3 text-sm font-medium hover:bg-white/[0.08] hover:border-white/[0.12] transition-colors">
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -178,7 +188,7 @@ export default function SignupPage() {
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
           </svg>
           Continue with Google
-        </button>
+        </button> */}
 
         {/* Login link */}
         <p className="text-center text-sm text-zinc-500 mt-6">

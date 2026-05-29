@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading  } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +15,12 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+  if (!authLoading && isAuthenticated) {
+    router.replace("/dashboard");
+  }
+}, [authLoading, isAuthenticated, router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -34,6 +40,10 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (authLoading) {
+    return null;
   }
 
   return (

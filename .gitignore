@@ -1,17 +1,42 @@
 # Frontend
-FRONTEND/node_modules
-FRONTEND/.next
+FRONTEND/node_modules/
+FRONTEND/.next/
+FRONTEND/out/
 
 # Backend
-BACKEND/__pycache__
-BACKEND/venv
-BACKEND/.venv
+BACKEND/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Secrets
+BACKEND/venv/
+BACKEND/.venv/
+venv/
+.venv/
+
+# Environment Variables
 .env
-*.env
+.env.local
+.env.*
 BACKEND/.env
+FRONTEND/.env.local
 
-# OS
+# IDE
+.vscode/
+.idea/
+
+# OS Files
 Thumbs.db
 .DS_Store
+
+# Logs
+*.log
+
+# Python Testing
+.pytest_cache/
+.coverage
+
+# Misc
+*.tmp
+*.bak

@@ -22,6 +22,8 @@ def register(req: RegisterRequest):
         )
 
     # Hash password and save
+    print("Password:", req.password)
+    print("Length:", len(req.password))
     hashed = pwd_context.hash(req.password)
     user_doc = {
         "name": req.name,
