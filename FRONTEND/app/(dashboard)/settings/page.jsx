@@ -5,6 +5,7 @@ import TopNav from "@/app/components/dashboard/TopNav";
 import { useSidebarToggle } from "@/app/(dashboard)/layout";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useToast } from "@/app/components/ui/Toast";
+import { put } from "@/app/lib/api";
 
 export default function SettingsPage() {
   const toggleSidebar = useSidebarToggle();
@@ -29,8 +30,16 @@ export default function SettingsPage() {
     setProfileSaving(true);
     try {
       // TODO: await put('/api/profile', { name });
-      await new Promise((r) => setTimeout(r, 800));
+      const result = await put(
+        "/api/auth/profile",
+        { name }
+      );
       toast.success("Profile updated successfully");
+      localStorage.setItem(
+        "user",
+        JSON.stringify(result.user)
+      );
+      window.location.reload();
     } catch (err) {
       toast.error(err.message);
     }
@@ -56,7 +65,13 @@ export default function SettingsPage() {
     setPwdSaving(true);
     try {
       // TODO: await put('/api/password', { currentPassword: currentPwd, newPassword: newPwd });
-      await new Promise((r) => setTimeout(r, 800));
+      await put(
+        "/api/auth/change-password",
+        {
+          currentPassword: currentPwd,
+          newPassword: newPwd,
+        }
+      );
       setCurrentPwd("");
       setNewPwd("");
       setConfirmPwd("");
@@ -169,8 +184,12 @@ export default function SettingsPage() {
             Permanently delete your account and all associated data. This action
             cannot be undone.
           </p>
-          <button className="px-4 py-2 text-sm font-medium text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/10 transition">
-            Delete Account
+
+          <button
+            disabled
+            className="px-4 py-2 text-sm font-medium text-red-400 rounded-lg border border-red-500/30 opacity-50 cursor-not-allowed"
+          >
+            Delete Account (Coming Soon)
           </button>
         </div>
       </div>

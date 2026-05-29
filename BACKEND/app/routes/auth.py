@@ -22,8 +22,8 @@ def register(req: RegisterRequest):
         )
 
     # Hash password and save
-    print("Password:", req.password)
-    print("Length:", len(req.password))
+    # print("Password:", req.password)
+    # print("Length:", len(req.password))
     hashed = pwd_context.hash(req.password)
     user_doc = {
         "name": req.name,
@@ -81,3 +81,54 @@ def get_me(user_id: str = Depends(get_current_user)):
         "name": user["name"],
         "email": user["email"],
     }
+
+@router.put("/profile")
+def update_profile(
+    data: dict,
+    user_id: str = Depends(get_current_user)
+):
+    users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"name": data["name"]}}
+    )
+
+    user = users_collection.find_one(
+        {"_id": ObjectId(user_id)}
+    )
+
+    return {
+        "user": {
+            "id": str(user["_id"]),
+            "name": user["name"],
+            "email": user["email"]
+        }
+    }
+    
+@router.put("/change-password")
+def change_password(
+    data: dict,
+    user_id: str = Depends(get_current_user)
+):
+    user = users_collection.find_one(
+        {"_id": ObjectId(user_id)}
+    )
+
+    if not pwd_context.verify(
+        data["currentPassword"],
+        user["password"]
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+
+    hashed = pwd_context.hash(
+        data["newPassword"]
+    )
+
+    users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"password": hashed}}
+    )
+
+    return {"message": "Password updated"}
