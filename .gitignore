@@ -12,6 +12,7 @@ BACKEND/__pycache__/
 
 BACKEND/venv/
 BACKEND/.venv/
+BACKEND/uploads/
 venv/
 .venv/
 

@@ -50,11 +50,13 @@ async def upload_document(
         "name": file.filename,
         "type": ext.replace(".", ""),
         "size": len(content),
-        "file_path": file_path,
         "content": extracted_text,
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
     }
     result = documents_collection.insert_one(doc)
+    
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
     return {
         "id": str(result.inserted_id),
@@ -86,12 +88,9 @@ def get_documents(user_id: str = Depends(get_current_user)):
 def delete_document(doc_id: str, user_id: str = Depends(get_current_user)):
     """Delete a document by ID."""
     doc = documents_collection.find_one({"_id": ObjectId(doc_id), "user_id": user_id})
+    
     if not doc:
         raise HTTPException(404, "Document not found")
-
-    # Remove file from disk
-    if os.path.exists(doc.get("file_path", "")):
-        os.remove(doc["file_path"])
 
     documents_collection.delete_one({"_id": ObjectId(doc_id)})
     return {"message": "Document deleted"}
