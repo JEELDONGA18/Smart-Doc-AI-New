@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import TopNav from "@/app/components/dashboard/TopNav";
 import { useSidebarToggle } from "@/app/(dashboard)/layout";
 import { useToast } from "@/app/components/ui/Toast";
+import { get, upload, del } from "@/app/lib/api";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -29,14 +30,14 @@ const typeIcons = {
   csv: "CSV",
 };
 
-const mockDocuments = [
-  { id: 1, name: "Q4-Financial-Report.pdf", size: 2_450_000, type: "pdf", uploadedAt: "2026-05-27" },
-  { id: 2, name: "Project-Proposal-Draft.docx", size: 890_000, type: "docx", uploadedAt: "2026-05-26" },
-  { id: 3, name: "Meeting-Notes-May.txt", size: 12_400, type: "txt", uploadedAt: "2026-05-25" },
-  { id: 4, name: "Customer-Data-Export.csv", size: 5_600_000, type: "csv", uploadedAt: "2026-05-24" },
-  { id: 5, name: "Legal-Contract-v2.pdf", size: 1_230_000, type: "pdf", uploadedAt: "2026-05-23" },
-  { id: 6, name: "Product-Requirements.docx", size: 445_000, type: "docx", uploadedAt: "2026-05-22" },
-];
+// const mockDocuments = [
+//   { id: 1, name: "Q4-Financial-Report.pdf", size: 2_450_000, type: "pdf", uploadedAt: "2026-05-27" },
+//   { id: 2, name: "Project-Proposal-Draft.docx", size: 890_000, type: "docx", uploadedAt: "2026-05-26" },
+//   { id: 3, name: "Meeting-Notes-May.txt", size: 12_400, type: "txt", uploadedAt: "2026-05-25" },
+//   { id: 4, name: "Customer-Data-Export.csv", size: 5_600_000, type: "csv", uploadedAt: "2026-05-24" },
+//   { id: 5, name: "Legal-Contract-v2.pdf", size: 1_230_000, type: "pdf", uploadedAt: "2026-05-23" },
+//   { id: 6, name: "Product-Requirements.docx", size: 445_000, type: "docx", uploadedAt: "2026-05-22" },
+// ];
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + " B";
@@ -53,9 +54,23 @@ export default function UploadPage() {
   const toast = useToast();
   const fileInputRef = useRef(null);
 
-  const [files, setFiles] = useState(mockDocuments);
+  // const [files, setFiles] = useState(mockDocuments);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  async function loadDocuments() {
+    try {
+      const docs = await get("/api/documents");
+      setFiles(docs);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  }
 
   function validateFile(file) {
     const ext = getExtension(file.name);
@@ -70,49 +85,79 @@ export default function UploadPage() {
     return true;
   }
 
-  function simulateUpload(file) {
-    const uploadId = Date.now() + Math.random();
-    const ext = getExtension(file.name);
+  // function simulateUpload(file) {
+  //   const uploadId = Date.now() + Math.random();
+  //   const ext = getExtension(file.name);
 
-    const uploadItem = {
-      id: uploadId,
-      name: file.name,
-      size: file.size,
-      progress: 0,
-    };
+  //   const uploadItem = {
+  //     id: uploadId,
+  //     name: file.name,
+  //     size: file.size,
+  //     progress: 0,
+  //   };
 
-    setUploading((prev) => [...prev, uploadItem]);
+  //   setUploading((prev) => [...prev, uploadItem]);
 
-    const interval = setInterval(() => {
-      setUploading((prev) =>
-        prev.map((u) =>
-          u.id === uploadId ? { ...u, progress: Math.min(u.progress + 5, 100) } : u
-        )
-      );
-    }, 100);
+  //   const interval = setInterval(() => {
+  //     setUploading((prev) =>
+  //       prev.map((u) =>
+  //         u.id === uploadId ? { ...u, progress: Math.min(u.progress + 5, 100) } : u
+  //       )
+  //     );
+  //   }, 100);
 
-    setTimeout(() => {
-      clearInterval(interval);
-      setUploading((prev) => prev.filter((u) => u.id !== uploadId));
-      setFiles((prev) => [
+  //   setTimeout(() => {
+  //     clearInterval(interval);
+  //     setUploading((prev) => prev.filter((u) => u.id !== uploadId));
+  //     setFiles((prev) => [
+  //       {
+  //         id: Date.now(),
+  //         name: file.name,
+  //         size: file.size,
+  //         type: ext,
+  //         uploadedAt: new Date().toISOString().split("T")[0],
+  //       },
+  //       ...prev,
+  //     ]);
+  //     toast.success(`${file.name} uploaded successfully`);
+  //   }, 2200);
+  // }
+
+  async function uploadRealFile(file) {
+    try {
+      setUploading((prev) => [
+        ...prev,
         {
-          id: Date.now(),
+          id: crypto.randomUUID(),
           name: file.name,
           size: file.size,
-          type: ext,
-          uploadedAt: new Date().toISOString().split("T")[0],
+          progress: 100,
         },
-        ...prev,
       ]);
-      toast.success(`${file.name} uploaded successfully`);
-    }, 2200);
+
+      const result = await upload(
+        "/api/documents/upload",
+        file
+      );
+
+      toast.success(`${result.name} uploaded successfully`);
+
+      await loadDocuments();
+
+      setUploading((prev) =>
+        prev.filter((u) => u.name !== file.name)
+      );
+    } catch (err) {
+      toast.error(err.message);
+    }
   }
 
   function handleFiles(fileList) {
     const incoming = Array.from(fileList);
     incoming.forEach((file) => {
       if (validateFile(file)) {
-        simulateUpload(file);
+        // simulateUpload(file);
+        uploadRealFile(file);
       }
     });
   }
@@ -139,9 +184,20 @@ export default function UploadPage() {
     setUploading((prev) => prev.filter((u) => u.id !== id));
   }
 
-  function deleteFile(id) {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-    toast.success("Document deleted");
+  async function deleteFile(id) {
+    // setFiles((prev) => prev.filter((f) => f.id !== id));
+    // toast.success("Document deleted");
+      try {
+      await del(
+        `/api/documents/${id}`
+      );
+
+      toast.success("Document deleted");
+
+      await loadDocuments();
+    } catch (err) {
+      toast.error(err.message);
+    }
   }
 
   return (
@@ -265,7 +321,7 @@ export default function UploadPage() {
                 <div className="flex items-center gap-2 text-xs text-zinc-500">
                   <span>{formatFileSize(doc.size)}</span>
                   <span>·</span>
-                  <span>{doc.uploadedAt}</span>
+                  <span>{new Date(doc.uploadedAt).toLocaleString("en-IN")}</span>
                 </div>
               </div>
             ))}

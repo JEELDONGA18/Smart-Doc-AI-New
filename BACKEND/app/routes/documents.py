@@ -1,5 +1,4 @@
 import os
-import shutil
 from datetime import datetime, timezone
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from bson import ObjectId
@@ -8,7 +7,7 @@ from app.database.connection import documents_collection
 from app.services.text_extractor import extract_text
 from app.utils.deps import get_current_user
 
-router = APIRouter(prefix="/api", tags=["Documents"])
+router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -34,12 +33,16 @@ async def upload_document(
         raise HTTPException(400, "File exceeds 10MB limit.")
 
     # Save file to disk
-    file_path = os.path.join(UPLOAD_DIR, f"{user_id}_{file.filename}")
+    timestamp = int(datetime.now().timestamp())
+    file_path = os.path.join(UPLOAD_DIR, f"{user_id}_{timestamp}_{file.filename}")
     with open(file_path, "wb") as f:
         f.write(content)
 
     # Extract text
-    extracted_text = extract_text(file_path)
+    try:
+        extracted_text = extract_text(file_path)
+    except Exception:
+        extracted_text = ""
 
     # Save to MongoDB
     doc = {
@@ -58,11 +61,11 @@ async def upload_document(
         "name": file.filename,
         "type": doc["type"],
         "size": len(content),
-        "uploaded_at": doc["uploaded_at"],
+        "uploadedAt": doc["uploaded_at"],
     }
 
 
-@router.get("/documents")
+@router.get("/")
 def get_documents(user_id: str = Depends(get_current_user)):
     """List all documents uploaded by the current user."""
     docs = documents_collection.find({"user_id": user_id}).sort("uploaded_at", -1)
@@ -73,13 +76,13 @@ def get_documents(user_id: str = Depends(get_current_user)):
             "name": doc["name"],
             "type": doc["type"],
             "size": doc["size"],
-            "uploaded_at": doc["uploaded_at"],
+            "uploadedAt": doc["uploaded_at"],
         }
         for doc in docs
     ]
 
 
-@router.delete("/document/{doc_id}")
+@router.delete("/{doc_id}")
 def delete_document(doc_id: str, user_id: str = Depends(get_current_user)):
     """Delete a document by ID."""
     doc = documents_collection.find_one({"_id": ObjectId(doc_id), "user_id": user_id})
