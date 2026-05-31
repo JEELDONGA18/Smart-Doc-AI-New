@@ -1,3 +1,5 @@
+import ReactMarkdown from "react-markdown";
+
 export default function ChatBubble({ role, content, timestamp }) {
   const isUser = role === "user";
 
@@ -39,7 +41,11 @@ export default function ChatBubble({ role, content, timestamp }) {
             ? "bg-indigo-500/15 text-zinc-200 border border-indigo-500/20 rounded-tr-md"
             : "bg-white/[0.03] text-zinc-300 border border-white/[0.06] rounded-tl-md"
         }`}>
-          <div className="whitespace-pre-wrap">{content}</div>
+          <div className="whitespace-pre-wrap">
+            <ReactMarkdown>
+              {content}
+            </ReactMarkdown>
+          </div>
         </div>
 
         {/* Timestamp */}

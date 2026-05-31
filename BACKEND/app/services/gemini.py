@@ -17,6 +17,9 @@ STRICT RULES:
    "Sorry, I can only answer questions related to uploaded company documents."
 5. When citing information, mention which document it came from.
 6. Keep answers clear, concise, and professional.
+7. Use bullet points whenever listing items.
+8. Avoid excessive blank lines.
+9. Format answers in a readable structure.
 
 DOCUMENT CONTENT:
 {context}
@@ -40,8 +43,13 @@ def ask_gemini(question: str, document_content: str) -> str:
                 {"role": "user", "parts": [{"text": question}]},
             ],
         )
+        
+        answer = response.text or ""
 
-        return response.text or "Sorry, I couldn't generate a response. Please try again."
+        while "\n\n\n" in answer:
+            answer = answer.replace("\n\n\n", "\n\n")
+
+        return answer or "Sorry, I couldn't generate a response. Please try again."
 
     except APIError as e:
         print(f"Gemini API Error: {e}")

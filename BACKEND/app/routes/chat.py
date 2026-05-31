@@ -26,9 +26,9 @@ def get_document_context(user_id: str) -> str:
 
     context = "\n\n".join(context_parts)
 
-    print("\n===== DOCUMENT CONTEXT =====")
-    print(context)
-    print("============================\n")
+    # print("\n===== DOCUMENT CONTEXT =====")
+    # print(context)
+    # print("============================\n")
     return context[:MAX_CONTEXT]
 
 
