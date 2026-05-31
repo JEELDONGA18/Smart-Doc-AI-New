@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ChatBubble from "@/app/components/dashboard/ChatBubble";
 import { useSidebarToggle } from "@/app/(dashboard)/layout";
-import { post, get, del } from "@/app/lib/api";
+import { post, get, del, put } from "@/app/lib/api";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 export default function ChatPage() {
   const toggleSidebar = useSidebarToggle();
@@ -16,6 +17,7 @@ export default function ChatPage() {
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const [menuOpen, setMenuOpen] = useState(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -129,6 +131,42 @@ export default function ChatPage() {
     }
   }
 
+  async function renameChat(chatId) {
+    const newTitle = prompt("Enter new chat title");
+
+    if (!newTitle?.trim()) return;
+
+    try {
+      await put(
+        `/api/chat/chats/${chatId}/rename`,
+        {
+          title: newTitle.trim(),
+        }
+      );
+
+      loadChats();
+      setMenuOpen(null);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    }
+  }
+
+  async function deleteChat(chatId) {
+    try {
+      await del(`/api/chat/${chatId}`);
+
+      if (activeChat === chatId) {
+        setActiveChat(null);
+        setMessages([]);
+      }
+
+      loadChats();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* ─── Left Panel: Chat List ─── */}
@@ -152,27 +190,85 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto py-2">
           {chats.map((chat) => (
-            <button
+            <div
               key={chat.id}
-              onClick={() => loadChat(chat.id)}
-              className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
+              className={`group relative flex items-center justify-between px-4 py-3 transition-colors ${
                 activeChat === chat.id
                   ? "bg-white/[0.06]"
                   : "hover:bg-white/[0.03]"
               }`}
             >
-              <svg
-                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
-                className="shrink-0 text-zinc-600"
+              {/* Chat Button */}
+              <button
+                onClick={() => loadChat(chat.id)}
+                className="flex items-center gap-3 flex-1 text-left min-w-0"
               >
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-zinc-300 truncate">{chat.title}</p>
-                <p className="text-xs text-zinc-600">{new Date(chat.created_at).toLocaleDateString()}</p>
-              </div>
-            </button>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  className="shrink-0 text-zinc-600"
+                >
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                </svg>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-zinc-300 truncate">
+                    {chat.title}
+                  </p>
+
+                  <p className="text-xs text-zinc-600">
+                    {new Date(chat.created_at).toLocaleDateString("en-GB")}
+                  </p>
+                </div>
+              </button>
+
+              {/* Menu Button */}
+              <button
+                onClick={() =>
+                  setMenuOpen(menuOpen === chat.id ? null : chat.id)
+                }
+                className="
+                  opacity-0
+                  group-hover:opacity-100
+                  transition-opacity
+                  text-zinc-500
+                  hover:text-white
+                  p-1
+                "
+              >
+                <MoreHorizontal size={16} />
+              </button>
+
+              {/* Dropdown */}
+              {menuOpen === chat.id && (
+                <div className="absolute right-3 top-10 z-50 w-36 rounded-lg border border-white/10 bg-zinc-900 shadow-xl overflow-hidden">
+                  <button
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5"
+                    onClick={() => renameChat(chat.id)}
+                  >
+                    <Pencil size={14} />
+                    Rename
+                  </button>
+
+                  <button
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                    onClick={() => {
+                      if (confirm("Delete this conversation?")) {
+                        deleteChat(chat.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </aside>
@@ -278,11 +374,11 @@ export default function ChatPage() {
         <div className="border-t border-white/[0.06] p-4 shrink-0">
           <div className="flex items-end gap-3 max-w-3xl mx-auto">
             {/* Attachment button */}
-            <button className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] transition text-zinc-500 hover:text-zinc-300 shrink-0">
+            {/* <button className="p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] transition text-zinc-500 hover:text-zinc-300 shrink-0">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
               </svg>
-            </button>
+            </button> */}
 
             {/* Text input */}
             <div className="flex-1 relative">
@@ -302,7 +398,7 @@ export default function ChatPage() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || loading}
-              className="p-3 rounded-xl bg-indigo-500 text-white transition hover:bg-indigo-400 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+              className="m-2 p-3 rounded-xl bg-indigo-500 text-white transition hover:bg-indigo-400 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="19" x2="12" y2="5" />

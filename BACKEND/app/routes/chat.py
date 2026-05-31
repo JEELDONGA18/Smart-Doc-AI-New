@@ -160,6 +160,29 @@ def get_chat_messages(chat_id: str, user_id: str = Depends(get_current_user)):
         ],
     }
 
+@router.put("/chats/{chat_id}/rename")
+def rename_chat(chat_id: str, data: dict, user_id: str = Depends(get_current_user)):
+    new_title = data.get("title")
+
+    if not new_title:
+        raise HTTPException(400, "Title is required")
+
+    result = chats_collection.update_one(
+        {
+            "_id": ObjectId(chat_id),
+            "user_id": user_id
+        },
+        {
+            "$set": {
+                "title": new_title
+            }
+        }
+    )
+
+    if result.modified_count == 0:
+        raise HTTPException(404, "Chat not found")
+
+    return {"message": "Chat renamed successfully"}
 
 @router.delete("/{chat_id}")
 def delete_chat(chat_id: str, user_id: str = Depends(get_current_user)):
