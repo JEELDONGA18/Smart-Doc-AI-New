@@ -4,56 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ChatBubble from "@/app/components/dashboard/ChatBubble";
 import { useSidebarToggle } from "@/app/(dashboard)/layout";
-
-// Mock previous chats
-const mockChats = [
-  { id: "1", title: "Revenue Analysis", date: "2025-05-28" },
-  { id: "2", title: "HR Policy Questions", date: "2025-05-27" },
-  { id: "3", title: "Product Roadmap", date: "2025-05-26" },
-  { id: "4", title: "Q3 Financial Report", date: "2025-05-25" },
-  { id: "5", title: "Engineering Handbook", date: "2025-05-24" },
-];
-
-const sampleMessages = [
-  {
-    id: "m1",
-    role: "user",
-    content: "What were our Q3 revenue numbers?",
-    createdAt: "2025-05-28T10:30:00Z",
-  },
-  {
-    id: "m2",
-    role: "assistant",
-    content:
-      "Based on the Q3 Financial Report, your total revenue was $4.2M, representing a 23% increase from Q2.\n\nBreakdown by segment:\n• Enterprise: $2.1M (+18%)\n• Mid-market: $1.4M (+31%)\n• SMB: $700K (+15%)\n\nSource: Q3-Financial-Report.pdf, page 12",
-    createdAt: "2025-05-28T10:30:15Z",
-  },
-  {
-    id: "m3",
-    role: "user",
-    content: "How does that compare to our targets?",
-    createdAt: "2025-05-28T10:31:00Z",
-  },
-  {
-    id: "m4",
-    role: "assistant",
-    content:
-      "According to the annual targets document, the Q3 target was $3.8M. You exceeded the target by $400K (10.5% above target).\n\nAll three segments outperformed:\n• Enterprise: exceeded by $100K\n• Mid-market: exceeded by $200K\n• SMB: exceeded by $100K\n\nSource: Annual-Targets-2025.pdf, page 4",
-    createdAt: "2025-05-28T10:31:20Z",
-  },
-];
-
-// Simulated AI responses for demo
-const aiResponses = [
-  "Based on the uploaded documents, I found relevant information. Let me summarize the key findings for you.\n\nThe data shows consistent growth across all metrics, with particularly strong performance in Q3.\n\nSource: company-data.pdf, page 8",
-  "I've analyzed the relevant sections of your knowledge base. Here's what I found:\n\nThe policy you're asking about was last updated in March 2025. It covers employee guidelines, remote work protocols, and compliance requirements.\n\nSource: HR-Handbook-v3.pdf, page 23",
-  "Looking at the documents you've uploaded, I can provide the following insights:\n\nYour team's productivity metrics improved by 34% after implementing the new workflow. The most significant gains were in the engineering department.\n\nSource: Quarterly-Review.pdf, page 15",
-];
+import { post } from "@/app/lib/api";
 
 export default function ChatPage() {
   const toggleSidebar = useSidebarToggle();
-  const [activeChat, setActiveChat] = useState("1");
-  const [messages, setMessages] = useState(sampleMessages);
+  const [activeChat, setActiveChat] = useState(null);
+  const [chats, setChats] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
@@ -88,20 +45,35 @@ export default function ChatPage() {
     setInput("");
     setLoading(true);
 
-    // TODO: Replace with real API call
-    // const response = await post('/api/chat', { chatId: activeChat, message: input });
-
-    // Simulate AI response delay
-    setTimeout(() => {
+    try {
+      const response = await post("/api/chat", {
+        message: input.trim(),
+      });
       const aiMsg = {
-        id: "msg-" + (Date.now() + 1),
+        id: "msg-" + Date.now(),
         role: "assistant",
-        content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+        content: response.reply,
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);
       setLoading(false);
-    }, 1500);
+    }
+    catch(error) {
+      console.error(error);
+
+      setMessages(prev => [
+          ...prev,
+          {
+            id: "error-" + Date.now(),
+            role: "assistant",
+            content: error.message,
+            createdAt: new Date().toISOString()
+          }
+      ]);
+    }
+    finally {
+      setLoading(false);
+    }
   }
 
   function handleKeyDown(e) {
@@ -114,6 +86,7 @@ export default function ChatPage() {
   function startNewChat() {
     setMessages([]);
     setActiveChat(null);
+    setInput("");
   }
 
   return (
@@ -138,14 +111,13 @@ export default function ChatPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
-          {mockChats.map((chat) => (
+          {chats.map((chat) => (
             <button
               key={chat.id}
               onClick={() => {
                 setActiveChat(chat.id);
                 setChatPanelOpen(false);
-                if (chat.id === "1") setMessages(sampleMessages);
-                else setMessages([]);
+                setMessages([]);
               }}
               className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
                 activeChat === chat.id
@@ -204,7 +176,7 @@ export default function ChatPage() {
           </button>
           <h2 className="text-sm font-medium text-zinc-300">
             {activeChat
-              ? mockChats.find((c) => c.id === activeChat)?.title || "Chat"
+              ? chats.find((c) => c.id === activeChat)?.title || "Chat"
               : "New Chat"}
           </h2>
         </div>

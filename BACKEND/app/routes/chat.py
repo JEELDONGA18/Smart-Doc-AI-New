@@ -7,7 +7,7 @@ from app.models.chat import ChatRequest
 from app.services.gemini import ask_gemini
 from app.utils.deps import get_current_user
 
-router = APIRouter(prefix="/api", tags=["Chat"])
+router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 
 def get_document_context(user_id: str) -> str:
@@ -22,10 +22,17 @@ def get_document_context(user_id: str) -> str:
     if not context_parts:
         return ""
 
-    return "\n\n".join(context_parts)
+    MAX_CONTEXT = 50000
+
+    context = "\n\n".join(context_parts)
+
+    print("\n===== DOCUMENT CONTEXT =====")
+    print(context)
+    print("============================\n")
+    return context[:MAX_CONTEXT]
 
 
-@router.post("/chat")
+@router.post("/")
 def send_message(req: ChatRequest, user_id: str = Depends(get_current_user)):
     """Send a message and get an AI response from uploaded documents."""
     # Get document context
@@ -122,7 +129,7 @@ def get_history(user_id: str = Depends(get_current_user)):
     return get_chats(user_id)
 
 
-@router.get("/chat/{chat_id}")
+@router.get("/{chat_id}")
 def get_chat_messages(chat_id: str, user_id: str = Depends(get_current_user)):
     """Get all messages for a specific chat."""
     chat = chats_collection.find_one({"_id": ObjectId(chat_id), "user_id": user_id})
@@ -148,7 +155,7 @@ def get_chat_messages(chat_id: str, user_id: str = Depends(get_current_user)):
     }
 
 
-@router.delete("/chat/{chat_id}")
+@router.delete("/{chat_id}")
 def delete_chat(chat_id: str, user_id: str = Depends(get_current_user)):
     """Delete a chat and all its messages."""
     chat = chats_collection.find_one({"_id": ObjectId(chat_id), "user_id": user_id})

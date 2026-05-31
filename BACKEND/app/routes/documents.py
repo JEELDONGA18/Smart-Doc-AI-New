@@ -41,7 +41,8 @@ async def upload_document(
     # Extract text
     try:
         extracted_text = extract_text(file_path)
-    except Exception:
+    except Exception as e:
+        print("Extraction Error:", e)
         extracted_text = ""
 
     # Save to MongoDB
