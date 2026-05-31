@@ -87,6 +87,9 @@ def send_message(req: ChatRequest, user_id: str = Depends(get_current_user)):
     messages_collection.insert_one(ai_msg)
 
     # Update chat timestamp
+    if not ObjectId.is_valid(chat_id):
+        raise HTTPException(400, "Invalid chat id")
+    
     chats_collection.update_one(
         {"_id": ObjectId(chat_id)},
         {"$set": {"updated_at": ai_msg["created_at"]}},
@@ -132,6 +135,9 @@ def get_history(user_id: str = Depends(get_current_user)):
 @router.get("/{chat_id}")
 def get_chat_messages(chat_id: str, user_id: str = Depends(get_current_user)):
     """Get all messages for a specific chat."""
+    if not ObjectId.is_valid(chat_id):
+        raise HTTPException(400, "Invalid chat id")
+    
     chat = chats_collection.find_one({"_id": ObjectId(chat_id), "user_id": user_id})
     if not chat:
         raise HTTPException(404, "Chat not found")
@@ -158,6 +164,9 @@ def get_chat_messages(chat_id: str, user_id: str = Depends(get_current_user)):
 @router.delete("/{chat_id}")
 def delete_chat(chat_id: str, user_id: str = Depends(get_current_user)):
     """Delete a chat and all its messages."""
+    if not ObjectId.is_valid(chat_id):
+        raise HTTPException(400, "Invalid chat id")
+    
     chat = chats_collection.find_one({"_id": ObjectId(chat_id), "user_id": user_id})
     if not chat:
         raise HTTPException(404, "Chat not found")

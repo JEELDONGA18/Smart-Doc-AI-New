@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ChatBubble from "@/app/components/dashboard/ChatBubble";
 import { useSidebarToggle } from "@/app/(dashboard)/layout";
-import { post } from "@/app/lib/api";
+import { post, get, del } from "@/app/lib/api";
 
 export default function ChatPage() {
   const toggleSidebar = useSidebarToggle();
@@ -31,6 +31,19 @@ export default function ChatPage() {
     }
   }, [input]);
 
+  useEffect(() => {
+    loadChats();
+  }, []);
+
+  async function loadChats() {
+    try {
+      const data = await get("/api/chat/chats");
+      setChats(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function handleSend() {
     if (!input.trim() || loading) return;
 
@@ -48,7 +61,12 @@ export default function ChatPage() {
     try {
       const response = await post("/api/chat", {
         message: input.trim(),
+        chat_id: activeChat,
       });
+      if (!activeChat && response.chat_id) {
+        setActiveChat(response.chat_id);
+        loadChats();
+      }
       const aiMsg = {
         id: "msg-" + Date.now(),
         role: "assistant",
@@ -56,6 +74,7 @@ export default function ChatPage() {
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);
+      loadChats();
       setLoading(false);
     }
     catch(error) {
@@ -89,6 +108,27 @@ export default function ChatPage() {
     setInput("");
   }
 
+  async function loadChat(chatId) {
+    try {
+      const data = await get(`/api/chat/${chatId}`);
+
+      setActiveChat(chatId);
+
+      setMessages(
+        data.messages.map((msg) => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          createdAt: msg.created_at,
+        }))
+      );
+
+      setChatPanelOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* ─── Left Panel: Chat List ─── */}
@@ -114,11 +154,7 @@ export default function ChatPage() {
           {chats.map((chat) => (
             <button
               key={chat.id}
-              onClick={() => {
-                setActiveChat(chat.id);
-                setChatPanelOpen(false);
-                setMessages([]);
-              }}
+              onClick={() => loadChat(chat.id)}
               className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${
                 activeChat === chat.id
                   ? "bg-white/[0.06]"
@@ -134,7 +170,7 @@ export default function ChatPage() {
               </svg>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-zinc-300 truncate">{chat.title}</p>
-                <p className="text-xs text-zinc-600">{chat.date}</p>
+                <p className="text-xs text-zinc-600">{new Date(chat.created_at).toLocaleDateString()}</p>
               </div>
             </button>
           ))}
