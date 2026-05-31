@@ -6,45 +6,7 @@ import TopNav from "@/app/components/dashboard/TopNav";
 import AnalyticsCard from "@/app/components/dashboard/AnalyticsCard";
 import { useSidebarToggle } from "@/app/(dashboard)/layout";
 import { SkeletonCard } from "@/app/components/ui/LoadingSkeleton";
-
-// Mock activity data — replace with API response
-const mockActivities = [
-  {
-    id: 1,
-    type: "upload",
-    title: "Uploaded quarterly-report.pdf",
-    description: "Added to Financial Reports workspace",
-    time: "10 minutes ago",
-  },
-  {
-    id: 2,
-    type: "chat",
-    title: "Chat: Revenue analysis",
-    description: "12 messages · Q3 Financial Report",
-    time: "1 hour ago",
-  },
-  {
-    id: 3,
-    type: "download",
-    title: "Exported summary report",
-    description: "Revenue Analysis — PDF format",
-    time: "3 hours ago",
-  },
-  {
-    id: 4,
-    type: "upload",
-    title: "Uploaded employee-handbook-v2.pdf",
-    description: "Added to HR Policies workspace",
-    time: "Yesterday",
-  },
-  {
-    id: 5,
-    type: "chat",
-    title: "Chat: Product roadmap priorities",
-    description: "8 messages · Product Roadmap 2026",
-    time: "Yesterday",
-  },
-];
+import { get } from "@/app/lib/api";
 
 const activityIcons = {
   upload: {
@@ -79,15 +41,40 @@ const activityIcons = {
 
 export default function DashboardPage() {
   const toggleSidebar = useSidebarToggle();
-  const [stats, setStats] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [stats, setStats] = useState({
+    totalDocuments: 0,
+    totalChats: 0,
+    totalQueries: 0,
+    latestDocument: "No Documents",
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with API call
-    // get('/api/stats').then(setStats).catch(console.error).finally(() => setLoading(false));
-    const timer = setTimeout(() => setLoading(false), 400); // simulate brief load
-    return () => clearTimeout(timer);
+    loadDashboard();
   }, []);
+
+  async function loadDashboard() {
+    try {
+      const [statsData, activityData] = await Promise.all([
+        get("/api/stats"),
+        get("/api/activity"),
+      ]);
+
+      setStats({
+        totalDocuments: statsData.totalDocuments,
+        totalChats: statsData.totalChats,
+        totalQueries: statsData.totalQueries,
+        latestDocument: statsData.latestDocument || "No Documents",
+      });
+
+      setActivities(activityData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const cards = [
     {
@@ -101,8 +88,7 @@ export default function DashboardPage() {
         </svg>
       ),
       label: "Total Documents",
-      value: "24",
-      trend: "+3 this week",
+      value: stats.totalDocuments,
     },
     {
       icon: (
@@ -111,8 +97,7 @@ export default function DashboardPage() {
         </svg>
       ),
       label: "Total Chats",
-      value: "142",
-      trend: "+12 today",
+      value: stats.totalChats,
     },
     {
       icon: (
@@ -121,8 +106,7 @@ export default function DashboardPage() {
         </svg>
       ),
       label: "AI Queries",
-      value: "1,847",
-      trend: "+89 today",
+      value: stats.totalQueries,
     },
     {
       icon: (
@@ -132,10 +116,21 @@ export default function DashboardPage() {
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
       ),
-      label: "Reports",
-      value: "18",
+      label: "Latest Document",
+      value: stats.latestDocument,
     },
   ];
+
+  function formatDateTime(dateString) {
+    const date = new Date(dateString);
+
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   return (
     <>
@@ -157,7 +152,6 @@ export default function DashboardPage() {
                   icon={card.icon}
                   label={card.label}
                   value={card.value}
-                  trend={card.trend}
                 />
               ))}
         </div>
@@ -180,7 +174,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] divide-y divide-white/[0.04]">
-              {mockActivities.map((activity) => {
+              {activities.map((activity) => {
                 const style = activityIcons[activity.type];
                 return (
                   <div key={activity.id} className="flex items-center gap-4 px-5 py-4">
@@ -191,7 +185,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-white truncate">{activity.title}</p>
                       <p className="text-xs text-zinc-500 mt-0.5">{activity.description}</p>
                     </div>
-                    <span className="text-xs text-zinc-600 shrink-0">{activity.time}</span>
+                    <span className="text-xs text-zinc-600 shrink-0">{formatDateTime(activity.time)}</span>
                   </div>
                 );
               })}

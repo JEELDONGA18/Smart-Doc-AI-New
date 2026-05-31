@@ -13,7 +13,7 @@ export default function AnalyticsCard({ icon, label, value, trend }) {
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
+      <p className="text-3xl font-bold text-white tracking-tight truncate">{value}</p>
       <p className="text-sm text-zinc-500 mt-1">{label}</p>
     </div>
   );
