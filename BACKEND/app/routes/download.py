@@ -8,7 +8,7 @@ from reportlab.lib.pagesizes import letter
 from app.utils.deps import get_current_user
 from app.database.connection import chats_collection, messages_collection
 
-router = APIRouter(prefix="/api/download", tags=["Download"])
+router = APIRouter(prefix="/download", tags=["Download"])
 
 # Use a temporary directory for generated files
 TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "temp")
