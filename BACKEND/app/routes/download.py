@@ -8,7 +8,7 @@ from reportlab.lib.pagesizes import letter
 from app.utils.deps import get_current_user
 from app.database.connection import chats_collection, messages_collection
 
-router = APIRouter(prefix="/download", tags=["Download"])
+router = APIRouter(prefix="/api/download", tags=["Download"])
 
 # Use a temporary directory for generated files
 TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "temp")
@@ -93,3 +93,22 @@ def download_chat_txt(chat_id: str, user_id: str = Depends(get_current_user)):
         filename=f"chat_{chat_id}.txt",
         media_type="text/plain"
     )
+
+@router.get("/")
+def get_downloadable_chats(user_id: str = Depends(get_current_user)):
+    """Return chats available for download."""
+
+    chats = chats_collection.find(
+        {"user_id": user_id}
+    ).sort("created_at", -1)
+
+    result = []
+
+    for chat in chats:
+        result.append({
+            "id": str(chat["_id"]),
+            "name": chat.get("title", "Untitled Chat"),
+            "date": chat.get("created_at"),
+        })
+
+    return result
