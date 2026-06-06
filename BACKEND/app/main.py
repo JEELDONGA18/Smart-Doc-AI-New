@@ -9,7 +9,7 @@ app = FastAPI(title="Smart Doc AI")
 app.add_middleware(
     CORSMiddleware,
     # allow_origins=["http://localhost:3000", "https://smart-doc-ai-new.vercel.app"],
-    allow_origins=["*"],
+    allow_origins=["https://smart-doc-ai-new.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
