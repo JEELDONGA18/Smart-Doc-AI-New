@@ -11,3 +11,4 @@ pydantic[email]
 google-genai==1.14.0
 fpdf2==2.8.1
 reportlab==4.2.0
+bcrypt==4.0.1
