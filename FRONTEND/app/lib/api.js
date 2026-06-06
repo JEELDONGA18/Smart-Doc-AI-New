@@ -14,6 +14,8 @@ async function request(endpoint, options = {}) {
     ...options.headers,
   };
 
+  console.log("API_URL =", API_URL);
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
