@@ -71,7 +71,7 @@ export default function HeroSection() {
               className="mt-10 flex gap-4 justify-center lg:justify-start"
             >
               <motion.a
-                href="/register"
+                href="/signup"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="px-6 py-3 bg-white text-black rounded-full text-sm font-medium hover:bg-zinc-200 transition-all duration-300"

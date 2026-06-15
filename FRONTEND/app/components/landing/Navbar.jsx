@@ -160,7 +160,7 @@ export default function Navbar() {
                   Login
                 </Link>
                 <Link
-                  href="/register"
+                  href="/signup"
                   onClick={() => setMobileOpen(false)}
                   className="text-sm font-medium bg-white text-black rounded-full px-6 py-3 hover:bg-zinc-200 transition-colors"
                 >

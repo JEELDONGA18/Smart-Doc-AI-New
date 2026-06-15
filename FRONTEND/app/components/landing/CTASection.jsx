@@ -47,7 +47,7 @@ export default function CTASection() {
           className="mt-10"
         >
           <motion.a
-            href="#"
+            href="/signup"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="inline-block px-8 py-4 bg-white text-black rounded-full text-sm font-medium hover:bg-zinc-200 transition-all duration-300"
