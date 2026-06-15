@@ -91,9 +91,9 @@ def download_chat_pdf(
             detail="Chat not found"
         )
 
-    text = text.replace("&", "&amp;")
-    text = text.replace("<", "&lt;")
-    text = text.replace(">", "&gt;")
+    # text = text.replace("&", "&amp;")
+    # text = text.replace("<", "&lt;")
+    # text = text.replace(">", "&gt;")
     messages = messages_collection.find(
         {"chat_id": chat_id}
     ).sort("created_at", 1)
@@ -115,8 +115,12 @@ def download_chat_pdf(
 
     title = Paragraph(
         "<b>SMARTDOC AI</b>",
-        "<b>AI-Powered Document Intelligence Platform</b>",
         styles["Title"]
+    )
+
+    tagline = Paragraph(
+        "AI-Powered Document Intelligence Platform",
+        styles["Italic"]
     )
 
     subtitle = Paragraph(
@@ -130,6 +134,7 @@ def download_chat_pdf(
     )
 
     story.append(title)
+    story.append(tagline)
     story.append(subtitle)
     story.append(generated)
     story.append(Spacer(1, 20))
@@ -155,6 +160,10 @@ def download_chat_pdf(
         content = clean_markdown(
             str(msg["content"])
         )
+        
+        content = content.replace("&", "&amp;")
+        content = content.replace("<", "&lt;")
+        content = content.replace(">", "&gt;")
 
         role_para = Paragraph(
             (
